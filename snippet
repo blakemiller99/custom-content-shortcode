@@ -1,0 +1,31 @@
+// To use: [custom_excerpt post_id="123" length="250" trailing_chars=" . . ." read_more_link="true" class="custom-excerpt"]
+// By default, it will use the current post's ID and a length of 250 characters if attributes are not provided.
+
+function custom_excerpt_shortcode($atts) {
+    $atts = shortcode_atts(array(
+        'post_id' => get_the_ID(),
+        'length' => 250,
+        'length_type' => 'characters', // Default to 'characters' if not provided
+        'trailing_chars' => ' . . .',
+        'read_more_link' => 'false',
+        'class' => 'custom-excerpt',
+    ), $atts);
+
+    $post_content = get_post_field('post_content', $atts['post_id']); // If post ID defined in atts, use it. Otherwise, use current post
+    $post_content = preg_replace('/<img[^>]+\>/i', '', $post_content); // Remove images
+    
+    if ($atts['length_type'] === 'words') {
+        $words = preg_split("/[\s,]+/", strip_tags($post_content));
+        $excerpt = implode(' ', array_slice($words, 0, $atts['length']));
+    } else { // Default to 'characters'
+        $excerpt = substr(strip_tags($post_content), 0, $atts['length']);
+    }
+
+    $read_more_link = '';
+    if ($atts['read_more_link'] === 'true' && strlen($post_content) > $atts['length']) {
+        $read_more_link = ' <a href="' . get_permalink($atts['post_id']) . '">[Read more]</a>';
+    }
+
+    return '<div class="' . esc_attr($atts['class']) . '">' . $excerpt . $atts['trailing_chars'] . $read_more_link . '</div>';
+}
+add_shortcode('custom_excerpt', 'custom_excerpt_shortcode');
